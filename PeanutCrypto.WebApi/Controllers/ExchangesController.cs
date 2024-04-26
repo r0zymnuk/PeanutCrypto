@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PeanutCrypto.Application.Services;
 
 namespace PeanutCrypto.WebApi.Controllers;
@@ -16,5 +15,18 @@ public class ExchangesController(IExchangeComparerService exchangeComparer) : Co
         var rates = await _exchangeComparer.GetRates(baseSymbol, quoteSymbol);
 
         return Ok(rates);   
+    }
+
+    [HttpGet("estimates")]
+    public async Task<ActionResult> GetBestEstimated(string baseSymbol, string quoteSymbol, double amount)
+    {
+        var estimate = await _exchangeComparer.GetBestExchange(baseSymbol, quoteSymbol, amount);
+
+        if (estimate == null)
+        {
+            return NotFound("Sorry, but there are currently no available exchange APIs");
+        }
+
+        return Ok(estimate);
     }
 }

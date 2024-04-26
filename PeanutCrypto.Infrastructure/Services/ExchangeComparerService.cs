@@ -2,11 +2,6 @@
 using PeanutCrypto.Application.HttpClients;
 using PeanutCrypto.Application.Services;
 using PeanutCrypto.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PeanutCrypto.Infrastructure.Services;
 
@@ -18,17 +13,23 @@ public class ExchangeComparerService : IExchangeComparerService
     {
         _exchangeClients = serviceProvider.GetServices<IExchangeClient>();
     }
-    public Task<List<object>> GetBestExchange(string baseSymbol, string quoteSymbol, decimal amount)
+    public async Task<ExchangeResponse?> GetBestExchange(string baseSymbol, string quoteSymbol, double amount)
     {
-        throw new NotImplementedException();
+        var estimateTasks = _exchangeClients.Select(e => e.Exchange(baseSymbol, quoteSymbol, amount)).ToList();
+
+        await Task.WhenAll(estimateTasks);
+
+        var estimates = estimateTasks.Select(t => t.Result).OrderByDescending(e => e.OutputAmount).ToList();
+
+        return estimates.FirstOrDefault();
     }
 
     public async Task<List<ExchangeResponse>> GetRates(string baseSymbol, string quoteSymbol)
     {
-        var rates = _exchangeClients.Select(e => e.GetRate(baseSymbol, quoteSymbol)).ToList();
+        var rateTasks = _exchangeClients.Select(e => e.GetRate(baseSymbol, quoteSymbol)).ToList();
 
-        await Task.WhenAll(rates);
+        await Task.WhenAll(rateTasks);
 
-        return rates.Select(t => t.Result).ToList();
+        return rateTasks.Select(t => t.Result).ToList();
     }
 }

@@ -1,22 +1,19 @@
 ﻿using PeanutCrypto.Application.HttpClients;
 using PeanutCrypto.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 
 namespace PeanutCrypto.Infrastructure.HttpClients;
 
 public class BinanceClient(HttpClient httpClient) : IExchangeClient
 {
-    public Task<ExchangeResponse> Exchange(string baseSymbol, string quoteSymbol, decimal amount)
+    public async Task<ExchangeResponse> Exchange(string baseSymbol, string quoteSymbol, double amount)
     {
-        httpClient.GetAsync("");
+        var exchangeResponse = await GetRate(baseSymbol, quoteSymbol);
 
-        throw new NotImplementedException();
+        exchangeResponse.InputAmount = amount;
+        exchangeResponse.OutputAmount = amount * exchangeResponse.Rate;
+
+        return exchangeResponse;
     }
 
     public async Task<ExchangeResponse> GetRate(string baseSymbol, string quoteSymbol)
@@ -34,11 +31,11 @@ public class BinanceClient(HttpClient httpClient) : IExchangeClient
         }
 
         var content = await response.Content.ReadAsStringAsync();
-        var price = Decimal.Parse(JsonSerializer.Deserialize<JsonElement>(content).GetProperty("price").GetString() ?? throw new ArgumentException("Invalid json"));
+        var price = double.Parse(JsonSerializer.Deserialize<JsonElement>(content).GetProperty("price").GetString() ?? throw new ArgumentException("Invalid json"));
 
         if (inverted)
         {
-            price = (decimal)Math.Pow((double)price, -1);
+            price = Math.Pow(price, -1);
         }
 
         return new ExchangeResponse

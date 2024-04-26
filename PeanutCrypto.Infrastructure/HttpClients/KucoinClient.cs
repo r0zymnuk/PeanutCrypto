@@ -1,19 +1,19 @@
 ﻿using PeanutCrypto.Application.HttpClients;
 using PeanutCrypto.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace PeanutCrypto.Infrastructure.HttpClients;
 
 public class KucoinClient(HttpClient httpClient) : IExchangeClient
 {
-    public Task<ExchangeResponse> Exchange(string baseSymbol, string quoteSymbol, decimal amount)
+    public async Task<ExchangeResponse> Exchange(string baseSymbol, string quoteSymbol, double amount)
     {
-        throw new NotImplementedException();
+        var exchangeResponse = await GetRate(baseSymbol, quoteSymbol);
+
+        exchangeResponse.InputAmount = amount;
+        exchangeResponse.OutputAmount = amount * exchangeResponse.Rate;
+
+        return exchangeResponse;
     }
 
     public async Task<ExchangeResponse> GetRate(string baseSymbol, string quoteSymbol)
@@ -22,17 +22,26 @@ public class KucoinClient(HttpClient httpClient) : IExchangeClient
         var response = await httpClient.GetAsync($"api/v1/market/stats?symbol={baseSymbol}-{quoteSymbol}");
 
         var content = await response.Content.ReadAsStringAsync();
-        var priceProperty = JsonSerializer.Deserialize<JsonElement>(content).GetProperty("data").GetProperty("last");
+        var priceProperty = JsonSerializer.Deserialize<JsonElement>(content)
+            .GetProperty("data")
+            .GetProperty("last");
         if (priceProperty.ValueKind == JsonValueKind.Null)
         {
             response = await httpClient.GetAsync($"api/v1/market/stats?symbol={quoteSymbol}-{baseSymbol}");
             inverted = true;
+
+            content = await response.Content.ReadAsStringAsync();
+            priceProperty = JsonSerializer.Deserialize<JsonElement>(content)
+                .GetProperty("data")
+                .GetProperty("last");
         }
 
-        var price = Decimal.Parse(priceProperty.GetString() ?? throw new ArgumentException("Invalid json"));
+        var price = double.Parse(priceProperty.GetString()
+            ?? throw new ArgumentException("Invalid json"));
+
         if (inverted)
         {
-            price = (decimal)Math.Pow((double)price, -1);
+            price = Math.Pow(price, -1);
         }
 
         return new ExchangeResponse
