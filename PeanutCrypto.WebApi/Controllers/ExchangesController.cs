@@ -14,7 +14,12 @@ public class ExchangesController(IExchangeComparerService exchangeComparer) : Co
     {
         var rates = await _exchangeComparer.GetRates(baseSymbol, quoteSymbol);
 
-        return Ok(rates);   
+        if (rates is { Count: > 0})
+        {
+            return Ok(rates);       
+        }
+
+        return NotFound("Sorry, but there are currently no available exchange APIs");
     }
 
     [HttpGet("estimates")]

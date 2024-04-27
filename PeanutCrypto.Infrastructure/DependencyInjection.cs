@@ -27,7 +27,17 @@ public static class DependencyInjection
             options.BaseAddress = new Uri(configuration.GetValue<string>("Kucoin:Url") ??
                 throw new ArgumentNullException("Kucoin API Url", "Api url is required to access it"));
         });
+        /* Example for registering exchange client
+         * 
+        services.AddHttpClient<IExchangeClient, YourExchangeClient>("<Exchange Name>", options =>
+        {
+            options.BaseAddress = new Uri(configuration.GetValue<string>("<Exchange Name>:Url") ??
+                throw new ArgumentNullException("<Exchange Name> API Url", "Api url is required to access it"));
 
+            // Read exchange API for detailed guide how to use access key
+            options.DefaultRequestHeaders.Add(.....);
+        });
+        */
         services.AddScoped<IExchangeComparerService, ExchangeComparerService>();
     }
 }

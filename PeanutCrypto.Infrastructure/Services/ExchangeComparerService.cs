@@ -15,18 +15,25 @@ public class ExchangeComparerService : IExchangeComparerService
     }
     public async Task<ExchangeResponse?> GetBestExchange(string baseSymbol, string quoteSymbol, double amount)
     {
-        var estimateTasks = _exchangeClients.Select(e => e.Exchange(baseSymbol, quoteSymbol, amount)).ToList();
+        var estimateTasks = _exchangeClients
+            .Select(e => e.Exchange(baseSymbol, quoteSymbol, amount))
+            .ToList();
 
         await Task.WhenAll(estimateTasks);
 
-        var estimates = estimateTasks.Select(t => t.Result).OrderByDescending(e => e.OutputAmount).ToList();
+        var estimates = estimateTasks.Select(t => t.Result)
+            .OrderByDescending(e => e.OutputAmount)
+            .ToList();
+            
 
         return estimates.FirstOrDefault();
     }
 
     public async Task<List<ExchangeResponse>> GetRates(string baseSymbol, string quoteSymbol)
     {
-        var rateTasks = _exchangeClients.Select(e => e.GetRate(baseSymbol, quoteSymbol)).ToList();
+        var rateTasks = _exchangeClients
+            .Select(e => e.GetRate(baseSymbol, quoteSymbol))
+            .ToList();
 
         await Task.WhenAll(rateTasks);
 
