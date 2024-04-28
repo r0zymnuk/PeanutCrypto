@@ -7,9 +7,9 @@
   - "Url" (link to API)
   - "Key" (API access key, if one is needed)
 
-2. In HttpClients folder of Infrastructure project implement ```IExchangeClient```.
+2. In HttpClients folder of Infrastructure project implement ```IExchangeClient``` and follow naming style of ```<ExchangeName>Client```.
 
-3. Inside DependencyInjection class of Infrastructure project, register new exchange in DI container using AddHttpClient method
+3. Inside DependencyInjection class of Infrastructure project, register new exchange in DI container using AddExchangeClient method or default client registration method AddHttpClient
 ```cs
 services.AddHttpClient<IExchangeClient, YourExchangeClient>("<Exchange Name>", options =>
 {

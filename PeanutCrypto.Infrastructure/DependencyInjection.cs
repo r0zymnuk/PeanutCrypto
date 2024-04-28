@@ -16,28 +16,39 @@ public static class DependencyInjection
                 nameof(configuration),
                 "Exchage configrations section is required to have access to exchange data");
 
-        services.AddHttpClient<IExchangeClient, BinanceClient>("Binance", options =>
-        {
-            options.BaseAddress = new Uri(configuration.GetValue<string>("Binance:Url") ?? 
-                throw new ArgumentNullException("Binance API Url", "Api url is required to access it"));
-        });
+        services.AddExchangeClient<BinanceClient>(configuration);
 
-        services.AddHttpClient<IExchangeClient, KucoinClient>("Kucoin", options =>
-        {
-            options.BaseAddress = new Uri(configuration.GetValue<string>("Kucoin:Url") ??
-                throw new ArgumentNullException("Kucoin API Url", "Api url is required to access it"));
-        });
-        /* Example for registering exchange client
+        services.AddExchangeClient<KucoinClient>(configuration);
+
+        /* another for registering exchange client
          * 
         services.AddHttpClient<IExchangeClient, YourExchangeClient>("<Exchange Name>", options =>
         {
             options.BaseAddress = new Uri(configuration.GetValue<string>("<Exchange Name>:Url") ??
                 throw new ArgumentNullException("<Exchange Name> API Url", "Api url is required to access it"));
 
-            // Read exchange API for detailed guide how to use access key
+            // Read your exchange's API for detailed guide how to use access key
             options.DefaultRequestHeaders.Add(.....);
         });
         */
         services.AddScoped<IExchangeComparerService, ExchangeComparerService>();
+    }
+
+    private static void AddExchangeClient<ExchangeClient>(this IServiceCollection services, IConfiguration configuration) where ExchangeClient : class, IExchangeClient
+    {
+        string exchangeName = typeof(ExchangeClient).Name[..^6];
+
+        var baseAddress = configuration.GetValue<string>($"{exchangeName}:Url");
+        if (string.IsNullOrWhiteSpace(baseAddress))
+        {
+            Console.WriteLine($"{exchangeName} API Url is not found! Api url is required to access it");
+            return;
+        }
+
+        services.AddHttpClient<IExchangeClient, ExchangeClient>(exchangeName, options =>
+        {
+            options.BaseAddress = new Uri(baseAddress);
+        }
+        );
     }
 }

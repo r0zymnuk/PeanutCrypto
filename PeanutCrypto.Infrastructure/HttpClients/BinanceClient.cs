@@ -18,6 +18,9 @@ public class BinanceClient(HttpClient httpClient) : IExchangeClient
 
     public async Task<ExchangeResponse> GetRate(string baseSymbol, string quoteSymbol)
     {
+        baseSymbol = baseSymbol.ToUpper();
+        quoteSymbol = quoteSymbol.ToUpper();
+
         bool inverted = false;
         var response = await httpClient.GetAsync($"api/v3/ticker/price?symbol={baseSymbol}{quoteSymbol}");
         if (!response.IsSuccessStatusCode)
